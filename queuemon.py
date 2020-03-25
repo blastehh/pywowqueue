@@ -115,7 +115,7 @@ while True:
                 
             #print(text)
         if inqueue:
-            pout("Queue position: %d, Wait time: %s" % (queue, wait))
+            pout(f"Queue position: {queue}, Wait time: {wait}")
             
     launchWow()
     time.sleep(10)
