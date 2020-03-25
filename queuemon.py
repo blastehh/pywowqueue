@@ -75,7 +75,6 @@ def launchWow():
         else:
             pout("Is Battle.net Launcher running?")
 
-
 def pout(*args):
     curDT = datetime.datetime.now()
     dtString = curDT.strftime("%H:%M:%S") + " - "
@@ -97,26 +96,27 @@ else:
 while True:
     ss = screenshot("GxWindowClass", "World of Warcraft", False)
     if isinstance(ss, Image.Image):
-
         img = np.array(ss)
-
+        # Define area of the screen where we're looking for the queue/disconnect message
         startx = int(round(img.shape[1]/3.2))
         endx = int(round(img.shape[1]-startx))
         starty = int(round(img.shape[0]/2.5))
         endy = int(round(img.shape[0]-starty))
 
-        cropped_1 = img[starty:endy, startx:endx]
-        cropped = cv2.cvtColor(cropped_1, cv2.COLOR_RGB2BGR)
-        hsv = cv2.cvtColor(cropped, cv2.COLOR_BGR2HSV)
+        cropped = img[starty:endy, startx:endx]
+        hsv = cv2.cvtColor(cropped, cv2.COLOR_RGB2HSV)
 
+        # Define the HSV colour range of the status text
         lower = np.array([5, 130, 150])
         upper = np.array([70, 255, 255])
-        mask = cv2.inRange(hsv, lower, upper)
-        res = cv2.bitwise_and(cropped,cropped, mask=mask)
 
+        mask = cv2.inRange(hsv, lower, upper)
+
+        #cropped_BGR = cv2.cvtColor(cropped, cv2.COLOR_RGB2BGR)
+        #masked = cv2.bitwise_and(cropped_BGR,cropped_BGR, mask=mask)
         #cv2.imwrite('mask.png',mask)
-        #cv2.imwrite('res.png',res)
-        #cv2.imwrite('raw.png',cropped)
+        #cv2.imwrite('masked.png',res)
+        #cv2.imwrite('raw.png',cropped_BGR)
 
         text = pytesseract.image_to_string(mask)
         inqueue = False
