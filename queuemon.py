@@ -13,7 +13,7 @@ from pynput.mouse import Button, Controller as MouseController
 import sys,os, datetime
 mouse = MouseController()
 
-pytesseract.pytesseract.tesseract_cmd = r'D:\\Program Files\\Tesseract-OCR\\tesseract.exe'
+pytesseract.pytesseract.tesseract_cmd = r'D:\Program Files\Tesseract-OCR\tesseract.exe'
 
 def findWindow(window_title, window_class=None):
     return win32gui.FindWindow(window_class, window_title)
@@ -81,6 +81,11 @@ def pout(*args):
     for arg in args:
         dtString += arg
     print(dtString)
+
+if not os.path.isfile(pytesseract.pytesseract.tesseract_cmd):
+    pout("Tesseract not found! Check you have the correct path in the script.")
+    input()
+    exit()
 
 playbtn = cv2.imread(os.path.dirname(sys.argv[0])+'/play.png', 0)
 queue = 0
