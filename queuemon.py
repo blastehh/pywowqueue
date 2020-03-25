@@ -15,52 +15,66 @@ mouse = MouseController()
 
 pytesseract.pytesseract.tesseract_cmd = r'D:\\Program Files\\Tesseract-OCR\\tesseract.exe'
 
-def screenshot(window_title=None):
-    if window_title:
-        hwnd = win32gui.FindWindow(None, window_title)
-        if hwnd:
-            #win32gui.SetForegroundWindow(hwnd)
-            
-            im = pyautogui.screenshot()
+def findWindow(window_title, window_class=None):
+    return win32gui.FindWindow(window_class, window_title)
 
+def setFGW(hwnd):
+    try:
+        win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
+        win32gui.SetWindowPos(hwnd,win32con.HWND_NOTOPMOST, 0, 0, 0, 0, win32con.SWP_NOMOVE + win32con.SWP_NOSIZE)  
+        win32gui.SetWindowPos(hwnd,win32con.HWND_TOPMOST, 0, 0, 0, 0, win32con.SWP_NOMOVE + win32con.SWP_NOSIZE)  
+        win32gui.SetWindowPos(hwnd,win32con.HWND_NOTOPMOST, 0, 0, 0, 0, win32con.SWP_SHOWWINDOW + win32con.SWP_NOMOVE + win32con.SWP_NOSIZE)
+        shell = win32com.client.Dispatch("WScript.Shell")
+        shell.SendKeys('%')
+        win32gui.SetForegroundWindow(hwnd)
+    except:
+        # Handle exception, no one cares
+        pass
+
+def screenshot(window_class=None, window_title=None, setFG=False):
+    if window_title:
+        hwnd = findWindow(window_title, window_class)
+        if hwnd:
+            if setFG:
+                setFGW(hwnd)
+                time.sleep(1)
+
+            im = pyautogui.screenshot()
             return im
         else:
-            pout('Window not found!')
+            pout(f"{window_title} window not found!")
     else:
         im = pyautogui.screenshot()
         return im
 
 def closeWindow(window_title=None):
     if window_title:
-        hwnd = win32gui.FindWindow(None, window_title)
+        hwnd = findWindow(window_title)
         if hwnd:
             win32gui.PostMessage(hwnd,win32con.WM_CLOSE,0,0)
         else:
-            pout('Window not found!')
+            pout(f"Can't find {window_title} window to close")
 
 def launchWow():
-    while True:
-        hwnd = win32gui.FindWindow(None, "World of Warcraft")
-        if hwnd:
-            break
+    hwnd = findWindow("World of Warcraft", "GxWindowClass")
+    if not hwnd:
+        bnet = screenshot("Qt5QWindowOwnDCIcon", "Blizzard Battle.net", True)
+        if isinstance(bnet, Image.Image):
+            img = np.array(bnet)
+            img_gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+            res = cv2.matchTemplate(img_gray, playbtn, cv2.TM_CCOEFF_NORMED)
+            matches = np.where(res >= 0.9)
+            if np.shape(matches)[1] >= 1:
+                x = matches[1][0]
+                y = matches[0][0]
+                pout("Launching WoW...")
+                mouse.position = (int(x)+15, int(y)+5)
+                mouse.click(Button.left)
+            else:
+                pout("Failed to find Battle.net window. Is it on the screen?")
         else:
-            bnet = screenshot("Blizzard Battle.net")
-            if isinstance(bnet, Image.Image):
-                img = np.array(bnet)
-                img_gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-                res = cv2.matchTemplate(img_gray, playbtn, cv2.TM_CCOEFF_NORMED)
-                matches = np.where(res >= 0.9)
-                if np.shape(matches)[1] >= 1:
-                    x = matches[1][0]
-                    y = matches[0][0]
-                    pout("Launching WoW...")
-                    mouse.position = (int(x)+15, int(y)+5)
-                    mouse.click(Button.left)
-                else:
-                    hwnd = win32gui.FindWindow(None, "Blizzard Battle.net")
-                    if hwnd:
-                        win32gui.SetForegroundWindow(hwnd)
-        time.sleep(5)
+            pout("Is Battle.net Launcher running?")
+
 
 def pout(*args):
     curDT = datetime.datetime.now()
@@ -73,8 +87,15 @@ playbtn = cv2.imread(os.path.dirname(sys.argv[0])+'/play.png', 0)
 queue = 0
 wait = ""
 
+if findWindow("World of Warcraft", "GxWindowClass"):
+    pout("WoW is running!")
+else:
+    pout("WoW isn't running!")
+    launchWow()
+    time.sleep(10)
+
 while True:
-    ss = screenshot('World of Warcraft')
+    ss = screenshot("GxWindowClass", "World of Warcraft", False)
     if isinstance(ss, Image.Image):
 
         img = np.array(ss)
@@ -116,6 +137,6 @@ while True:
             #print(text)
         if inqueue:
             pout(f"Queue position: {queue}, Wait time: {wait}")
-            
-    launchWow()
+    else:
+        launchWow()
     time.sleep(10)
