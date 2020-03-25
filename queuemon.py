@@ -10,6 +10,7 @@ import time
 import win32con
 from PIL import Image
 from pynput.mouse import Button, Controller as MouseController
+import sys,os, datetime
 mouse = MouseController()
 
 pytesseract.pytesseract.tesseract_cmd = r'D:\\Program Files\\Tesseract-OCR\\tesseract.exe'
@@ -24,7 +25,7 @@ def screenshot(window_title=None):
 
             return im
         else:
-            print('Window not found!')
+            pout('Window not found!')
     else:
         im = pyautogui.screenshot()
         return im
@@ -35,7 +36,7 @@ def closeWindow(window_title=None):
         if hwnd:
             win32gui.PostMessage(hwnd,win32con.WM_CLOSE,0,0)
         else:
-            print('Window not found!')
+            pout('Window not found!')
 
 def launchWow():
     while True:
@@ -52,7 +53,7 @@ def launchWow():
                 if np.shape(matches)[1] >= 1:
                     x = matches[1][0]
                     y = matches[0][0]
-                    print("Launching WoW...")
+                    pout("Launching WoW...")
                     mouse.position = (int(x)+15, int(y)+5)
                     mouse.click(Button.left)
                 else:
@@ -61,7 +62,16 @@ def launchWow():
                         win32gui.SetForegroundWindow(hwnd)
         time.sleep(5)
 
-playbtn = cv2.imread('play.png', 0)
+def pout(*args):
+    curDT = datetime.datetime.now()
+    dtString = curDT.strftime("%H:%M:%S") + " - "
+    for arg in args:
+        dtString += arg
+    print(dtString)
+
+playbtn = cv2.imread(os.path.dirname(sys.argv[0])+'/play.png', 0)
+queue = 0
+wait = ""
 
 while True:
     ss = screenshot('World of Warcraft')
@@ -88,10 +98,24 @@ while True:
         #cv2.imwrite('raw.png',cropped)
 
         text = pytesseract.image_to_string(mask)
+        inqueue = False
         if "You have been disconnected from the server." in text:
-            print("Disconnected! Closing WoW...")
+            pout("Disconnected! Closing WoW...")
             closeWindow('World of Warcraft')
             time.sleep(12)
+        else:
+            lines = text.splitlines()
+            for i, val in enumerate(lines):
+                if "Position in queue" in val:
+                    inqueue = True
+                    queue = val.split("queue:",1)[1].strip()
+                elif "Estimated time" in val:
+                    inqueue = True
+                    wait = val.split("time:",1)[1].strip()
+                
+            #print(text)
+        if inqueue:
+            pout("Queue position: %d, Wait time: %s" % (queue, wait))
             
     launchWow()
     time.sleep(10)
