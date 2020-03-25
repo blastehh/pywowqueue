@@ -1,5 +1,5 @@
 # Requirements:
-# python -m install pywin32 pyautogui pytesseract opencv-python pillow pynput
+# python -m pip install pywin32 pyautogui pytesseract opencv-python pillow pynput
 # https://digi.bib.uni-mannheim.de/tesseract/tesseract-ocr-w64-setup-v5.0.0-alpha.20200223.exe
 import cv2
 import pyautogui
