@@ -87,7 +87,15 @@ if not os.path.isfile(pytesseract.pytesseract.tesseract_cmd):
     input()
     exit()
 
-playbtn = cv2.imread(os.path.dirname(sys.argv[0])+'/play.png', 0)
+playpath = 'play.png'
+if not os.path.isfile(playpath):
+    playpath = os.path.dirname(sys.argv[0])+'/play.png'
+if not os.path.isfile(playpath):
+    pout(f"play.png not found at: {playpath}")
+    input()
+    exit()
+
+playbtn = cv2.imread(playpath, 0)
 queue = 0
 wait = ""
 
