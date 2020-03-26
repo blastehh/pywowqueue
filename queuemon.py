@@ -137,6 +137,7 @@ while True:
             pout("Disconnected! Closing WoW...")
             closeWindow('World of Warcraft')
             time.sleep(12)
+            launchWow()
         else:
             lines = text.splitlines()
             for i, val in enumerate(lines):
