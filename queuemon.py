@@ -133,7 +133,7 @@ while True:
 
         text = pytesseract.image_to_string(mask)
         inqueue = False
-        if "You have been disconnected from the server." in text:
+        if "You have been disconnected" in text:
             pout("Disconnected! Closing WoW...")
             closeWindow('World of Warcraft')
             time.sleep(12)
