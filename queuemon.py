@@ -47,6 +47,11 @@ def screenshot(window_class=None, window_title=None, setFG=False):
         im = pyautogui.screenshot()
         return im
 
+def match_template(img_grayscale, template, threshold=0.9):
+    res = cv2.matchTemplate(img_grayscale, template, cv2.TM_CCOEFF_NORMED)
+    matches = np.where(res >= threshold)
+    return matches
+
 def closeWindow(window_title=None):
     if window_title:
         hwnd = findWindow(window_title)
@@ -60,10 +65,15 @@ def launchWow():
     if not hwnd:
         bnet = screenshot("Qt5QWindowOwnDCIcon", "Blizzard Battle.net", True)
         if isinstance(bnet, Image.Image):
+            scales = [1.0, 1.25, 1.5, 2.0]
             img = np.array(bnet)
             img_gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-            res = cv2.matchTemplate(img_gray, playbtn, cv2.TM_CCOEFF_NORMED)
-            matches = np.where(res >= 0.9)
+            for scale in scales:
+                scaled_play = cv2.resize(playbtn, (0,0), fx=scale, fy=scale)
+                matches = match_template(img_gray, scaled_play, 0.9)
+                if np.shape(matches)[1] >= 1:
+                    break
+
             if np.shape(matches)[1] >= 1:
                 x = matches[1][0]
                 y = matches[0][0]
