@@ -39,13 +39,21 @@ def screenshot(window_class=None, window_title=None, setFG=False):
                 setFGW(hwnd)
                 time.sleep(1)
 
-            im = pyautogui.screenshot()
-            return im
+            try:
+                im = pyautogui.screenshot()
+                return im
+            except Exception as e:
+                pout("Help! I'm blind!")
+                raise e
         else:
             pout(f"{window_title} window not found!")
     else:
-        im = pyautogui.screenshot()
-        return im
+        try:
+            im = pyautogui.screenshot()
+            return im
+        except Exception as e:
+            pout("Help! I'm blind!")
+            raise e
 
 def match_template(img_grayscale, template, threshold=0.9):
     res = cv2.matchTemplate(img_grayscale, template, cv2.TM_CCOEFF_NORMED)
@@ -63,27 +71,31 @@ def closeWindow(window_title=None):
 def launchWow():
     hwnd = findWindow("World of Warcraft", "GxWindowClass")
     if not hwnd:
-        bnet = screenshot("Qt5QWindowOwnDCIcon", "Blizzard Battle.net", True)
-        if isinstance(bnet, Image.Image):
-            scales = [1.0, 1.25, 1.5, 2.0]
-            img = np.array(bnet)
-            img_gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-            for scale in scales:
-                scaled_play = cv2.resize(playbtn, (0,0), fx=scale, fy=scale)
-                matches = match_template(img_gray, scaled_play, 0.9)
-                if np.shape(matches)[1] >= 1:
-                    break
-
-            if np.shape(matches)[1] >= 1:
-                x = matches[1][0]
-                y = matches[0][0]
-                pout("Launching WoW...")
-                mouse.position = (int(x)+15, int(y)+5)
-                mouse.click(Button.left)
-            else:
-                pout("Failed to find Battle.net window. Is it on the screen?")
+        try:
+            bnet = screenshot("Qt5QWindowOwnDCIcon", "Blizzard Battle.net", True)
+        except:
+            pass
         else:
-            pout("Is Battle.net Launcher running?")
+            if isinstance(bnet, Image.Image):
+                scales = [1.0, 1.25, 1.5, 2.0]
+                img = np.array(bnet)
+                img_gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+                for scale in scales:
+                    scaled_play = cv2.resize(playbtn, (0,0), fx=scale, fy=scale)
+                    matches = match_template(img_gray, scaled_play, 0.9)
+                    if np.shape(matches)[1] >= 1:
+                        break
+
+                if np.shape(matches)[1] >= 1:
+                    x = matches[1][0]
+                    y = matches[0][0]
+                    pout("Launching WoW...")
+                    mouse.position = (int(x)+15, int(y)+5)
+                    mouse.click(Button.left)
+                else:
+                    pout("Failed to find Battle.net window. Is it on the screen?")
+            else:
+                pout("Is Battle.net Launcher running?")
 
 def pout(*args):
     curDT = datetime.datetime.now()
@@ -117,50 +129,54 @@ else:
     time.sleep(10)
 
 while True:
-    ss = screenshot("GxWindowClass", "World of Warcraft", False)
-    if isinstance(ss, Image.Image):
-        img = np.array(ss)
-        # Define area of the screen where we're looking for the queue/disconnect message
-        startx = int(round(img.shape[1]/3.2))
-        endx = int(round(img.shape[1]-startx))
-        starty = int(round(img.shape[0]/2.5))
-        endy = int(round(img.shape[0]-starty))
-
-        cropped = img[starty:endy, startx:endx]
-        hsv = cv2.cvtColor(cropped, cv2.COLOR_RGB2HSV)
-
-        # Define the HSV colour range of the status text
-        lower = np.array([5, 130, 150])
-        upper = np.array([70, 255, 255])
-
-        mask = cv2.inRange(hsv, lower, upper)
-
-        #cropped_BGR = cv2.cvtColor(cropped, cv2.COLOR_RGB2BGR)
-        #masked = cv2.bitwise_and(cropped_BGR,cropped_BGR, mask=mask)
-        #cv2.imwrite('mask.png',mask)
-        #cv2.imwrite('masked.png',res)
-        #cv2.imwrite('raw.png',cropped_BGR)
-
-        text = pytesseract.image_to_string(mask)
-        inqueue = False
-        if "You have been disconnected" in text:
-            pout("Disconnected! Closing WoW...")
-            closeWindow('World of Warcraft')
-            time.sleep(12)
-            launchWow()
-        else:
-            lines = text.splitlines()
-            for i, val in enumerate(lines):
-                if "Position in queue" in val:
-                    inqueue = True
-                    queue = val.split("queue:",1)[1].strip()
-                elif "Estimated time" in val:
-                    inqueue = True
-                    wait = val.split("time:",1)[1].strip()
-                
-            #print(text)
-        if inqueue:
-            pout(f"Queue position: {queue}, Wait time: {wait}")
+    try:
+        ss = screenshot("GxWindowClass", "World of Warcraft", False)
+    except:
+        pass
     else:
-        launchWow()
+        if isinstance(ss, Image.Image):
+            img = np.array(ss)
+            # Define area of the screen where we're looking for the queue/disconnect message
+            startx = int(round(img.shape[1]/3.2))
+            endx = int(round(img.shape[1]-startx))
+            starty = int(round(img.shape[0]/2.5))
+            endy = int(round(img.shape[0]-starty))
+
+            cropped = img[starty:endy, startx:endx]
+            hsv = cv2.cvtColor(cropped, cv2.COLOR_RGB2HSV)
+
+            # Define the HSV colour range of the status text
+            lower = np.array([5, 130, 150])
+            upper = np.array([70, 255, 255])
+
+            mask = cv2.inRange(hsv, lower, upper)
+
+            #cropped_BGR = cv2.cvtColor(cropped, cv2.COLOR_RGB2BGR)
+            #masked = cv2.bitwise_and(cropped_BGR,cropped_BGR, mask=mask)
+            #cv2.imwrite('mask.png',mask)
+            #cv2.imwrite('masked.png',res)
+            #cv2.imwrite('raw.png',cropped_BGR)
+
+            text = pytesseract.image_to_string(mask)
+            inqueue = False
+            if "You have been disconnected" in text:
+                pout("Disconnected! Closing WoW...")
+                closeWindow('World of Warcraft')
+                time.sleep(12)
+                launchWow()
+            else:
+                lines = text.splitlines()
+                for i, val in enumerate(lines):
+                    if "Position in queue" in val:
+                        inqueue = True
+                        queue = val.split("queue:",1)[1].strip()
+                    elif "Estimated time" in val:
+                        inqueue = True
+                        wait = val.split("time:",1)[1].strip()
+                    
+                #print(text)
+            if inqueue:
+                pout(f"Queue position: {queue}, Wait time: {wait}")
+        else:
+            launchWow()
     time.sleep(10)
