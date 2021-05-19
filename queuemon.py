@@ -72,7 +72,8 @@ def launchWow():
     hwnd = findWindow("World of Warcraft", "GxWindowClass")
     if not hwnd:
         try:
-            bnet = screenshot("Qt5QWindowOwnDCIcon", "Blizzard Battle.net", True)
+            #win32gui.GetClassName(win32gui.FindWindow(None,"Battle.net"))
+            bnet = screenshot("Chrome_WidgetWin_0", "Battle.net", True)
         except:
             pass
         else:
