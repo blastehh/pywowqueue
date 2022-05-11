@@ -40,6 +40,7 @@ def screenshot(window_class=None, window_title=None, setFG=False):
                 time.sleep(1)
 
             try:
+                #im = pyautogui.screenshot('last.png')
                 im = pyautogui.screenshot()
                 return im
             except Exception as e:
@@ -72,7 +73,7 @@ def launchWow():
     hwnd = findWindow("World of Warcraft", "GxWindowClass")
     if not hwnd:
         try:
-            #win32gui.GetClassName(win32gui.FindWindow(None,"Battle.net"))
+            #print(win32gui.GetClassName(win32gui.FindWindow(None,"Battle.net")))
             bnet = screenshot("Chrome_WidgetWin_0", "Battle.net", True)
         except:
             pass
